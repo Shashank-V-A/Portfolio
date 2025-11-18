@@ -82,8 +82,13 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 }
 
 // Gemini API Configuration
-const GEMINI_API_KEY = 'AIzaSyD_9w6JTetW8dINSc7nK-OIjalzEx5DLPs';
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_KEY = window.__PORTFOLIO_CONFIG__?.GEMINI_API_KEY || '';
+if (!GEMINI_API_KEY) {
+    console.warn('Gemini API key missing. Please create config.js with your key.');
+}
+const GEMINI_API_URL = GEMINI_API_KEY
+    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`
+    : null;
 
 // My description/context for the AI
 const myDescription = `
@@ -398,6 +403,8 @@ async function sendMessage() {
         let fallbackText = getFallbackResponse(message);
         if (error.message === 'QUOTA_EXCEEDED') {
             fallbackText = `${getFallbackResponse(message)}\n\nBTW, I just hit my API quota, so this is a cached response. Try again in a minute for a fresh reply.`;
+        } else if (error.message === 'API_KEY_MISSING') {
+            fallbackText = `${getFallbackResponse(message)}\n\n(Heads up: I need a Gemini API key in config.js to answer live questions.)`;
         }
         
         appendBotResponse(fallbackText);
@@ -411,6 +418,9 @@ async function sendMessage() {
 
 // Get response from Gemini API
 async function getGeminiResponse(userMessage, isFirstMessage = false) {
+    if (!GEMINI_API_URL) {
+        throw new Error('API_KEY_MISSING');
+    }
     let greetingInstruction = '';
     if (isFirstMessage) {
         greetingInstruction = '- You can start with a brief greeting like "Hi" or "Hello" if appropriate, but keep it natural and brief';

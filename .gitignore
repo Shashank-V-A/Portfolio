@@ -67,3 +67,7 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# local config files (API keys etc.)
+config.js
+public/config.js
